@@ -1,7 +1,7 @@
 "use client";
 
-import { useDashboard } from "@/components/DashboardContext";
-import DashboardMemberList from "@/components/DashboardMemberList";
+import { useMemberListView } from "@/context/MemberListContext";
+import MemberList from "@/components/MemberList";
 import RootSelector from "@/components/RootSelector";
 import { Person, Relationship } from "@/types";
 import { useMemo } from "react";
@@ -24,18 +24,18 @@ const BubbleMapTree = dynamic(
   { ssr: false },
 );
 
-interface DashboardViewsProps {
+interface MembersViewsProps {
   persons: Person[];
   relationships: Relationship[];
   canEdit?: boolean;
 }
 
-export default function DashboardViews({
+export default function MembersViews({
   persons,
   relationships,
   canEdit = false,
-}: DashboardViewsProps) {
-  const { view: currentView, rootId } = useDashboard();
+}: MembersViewsProps) {
+  const { view: currentView, rootId } = useMemberListView();
 
   // Prepare map and roots for tree views
   const { personsMap, roots, defaultRootId } = useMemo(() => {
@@ -102,7 +102,7 @@ export default function DashboardViews({
 
         {currentView === "list" && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full relative z-10">
-            <DashboardMemberList
+            <MemberList
               initialPersons={persons}
               relationships={relationships}
               canEdit={canEdit}

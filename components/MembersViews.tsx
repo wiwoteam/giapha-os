@@ -4,8 +4,9 @@ import { useMemberListView } from "@/context/MemberListContext";
 import MemberList from "@/components/MemberList";
 import RootSelector from "@/components/RootSelector";
 import { Person, Relationship } from "@/types";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 
 const FamilyTree = dynamic(() => import("@/components/FamilyTree"));
 const MindmapTree = dynamic(() => import("@/components/MindmapTree"));
@@ -35,7 +36,9 @@ export default function MembersViews({
   relationships,
   canEdit = false,
 }: MembersViewsProps) {
-  const { view: currentView, rootId } = useMemberListView();
+  const { view: currentView, rootId, setView, setRootId } = useMemberListView();
+  const searchParams = useSearchParams();
+  const hasRestored = useRef(false);
 
   // Prepare map and roots for tree views
   const { personsMap, roots, defaultRootId } = useMemo(() => {
@@ -86,6 +89,43 @@ export default function MembersViews({
   }, [persons, relationships, rootId]);
 
   const activeRootId = rootId || defaultRootId;
+
+  // Khôi phục lựa chọn từ localStorage
+  useEffect(() => {
+    if (hasRestored.current) return;
+
+    const urlRootId = searchParams.get("rootId");
+
+    if (!urlRootId) {
+      try {
+        const savedRootId = localStorage.getItem("members_rootId");
+
+        if (!urlRootId && savedRootId && savedRootId !== rootId) {
+          setRootId(savedRootId);
+        }
+      } catch (e) {
+        console.warn("Failed to read from localStorage:", e);
+      }
+    }
+
+    hasRestored.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Lưu lựa chọn vào localStorage
+  useEffect(() => {
+    if (!hasRestored.current) return;
+
+    const timeout = setTimeout(() => {
+      try {
+        if (activeRootId) localStorage.setItem("members_rootId", activeRootId);
+      } catch (e) {
+        console.warn("Failed to write to localStorage:", e);
+      }
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [currentView, activeRootId]);
 
   return (
     <>
